@@ -8,9 +8,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = """
 module: okta_groups
-short_description: Communicate with the Okta API to manage users
+short_description: Communicate with the Okta API to manage groups
 description:
-    - The Okta user module manages Okta users
+    - The Okta groups module manages Okta groups
 version_added: "1.0"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -27,13 +27,13 @@ options:
     default: None
   action:
     description:
-      - Action to take against user API.
+      - Action to take against groups API.
     required: false
     default: list
     choices: [ create, update, delete, list ]
   id:
     description:
-      - ID of the user.
+      - ID of the group.
     required: false
     default: None
   name:
