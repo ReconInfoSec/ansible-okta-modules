@@ -1,0 +1,14 @@
+---
+- name: Testing Okta modules
+  hosts: localhost
+  tasks:
+
+    - name: List users in Okta organization
+      okta_user:
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+      register: users
+
+    - name: Print users
+      debug:
+        msg: "{{ users.json }}"
