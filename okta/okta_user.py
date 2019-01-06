@@ -94,12 +94,10 @@ EXAMPLES = '''
 
 # Update user's email address
 - okta_user:
-    action: create
+    action: update
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
-    first_name: "Whitney"
-    last_name: "Champion"
     email: "whitney@ihateunicorns.lol"
 
 # Delete user
