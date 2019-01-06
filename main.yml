@@ -3,35 +3,35 @@
   hosts: localhost
   tasks:
 
-    # - name: List users in Okta organization
-    #   okta_users:
-    #     organization: "{{ organization }}"
-    #     api_key: "{{ api_key }}"
-    #   register: okta_users
-    #
-    # - name: Print users
-    #   debug:
-    #     msg: "{{ okta_users.json }}"
-    #
-    # - name: List apps in Okta organization
-    #   okta_apps_swa:
-    #     organization: "{{ organization }}"
-    #     api_key: "{{ api_key }}"
-    #   register: okta_apps
-    #
-    # - name: Print apps
-    #   debug:
-    #     msg: "{{ okta_apps.json }}"
-    #
-    # - name: List groups in Okta organization
-    #   okta_groups:
-    #     organization: "{{ organization }}"
-    #     api_key: "{{ api_key }}"
-    #   register: okta_groups
-    #
-    # - name: Print groups
-    #   debug:
-    #     msg: "{{ okta_groups.json }}"
+    - name: List users in Okta organization
+      okta_users:
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+      register: okta_users
+
+    - name: Print users
+      debug:
+        msg: "{{ okta_users.json }}"
+
+    - name: List apps in Okta organization
+      okta_apps_swa:
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+      register: okta_apps
+
+    - name: Print apps
+      debug:
+        msg: "{{ okta_apps.json }}"
+
+    - name: List groups in Okta organization
+      okta_groups:
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+      register: okta_groups
+
+    - name: Print groups
+      debug:
+        msg: "{{ okta_groups.json }}"
 
     - name: Create Okta group
       okta_groups:
