@@ -112,7 +112,7 @@ def create(module,base_url,api_key,name,description):
 
     payload['profile'] = profile
 
-    url = base_url+"/?activate=%s" % (activate)
+    url = base_url
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=payload)
 
