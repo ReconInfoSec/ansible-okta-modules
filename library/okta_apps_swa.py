@@ -7,10 +7,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 DOCUMENTATION = """
-module: okta_user
-short_description: Communicate with the Okta API to manage users
+module: okta_apps_swa
+short_description: Communicate with the Okta API to manage applications
 description:
-    - The Okta user module manages Okta users
+    - The Okta apps module manages Okta applications
 version_added: "1.0"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -27,81 +27,50 @@ options:
     default: None
   action:
     description:
-      - Action to take against user API.
+      - Action to take against apps API.
     required: false
     default: list
     choices: [ create, update, delete, list ]
   id:
     description:
-      - ID of the user.
+      - ID of the app.
     required: false
     default: None
-  login:
+  login_url:
     description:
-      - Username.
+      - Login URL for the app.
     required: false
     default: None
-  activate:
+  redirect_url:
     description:
-      - Whether or not the new user is activate.
+      - Redirect URL for the app.
     required: false
     default: yes
-  password:
-    description:
-      - Password.
-    required: false
-    default: None
-  first_name:
-    description:
-      - First name.
-    required: false
-    default: None
-  last_name:
-    description:
-      - Last name.
-    required: false
-    default: None
-  email:
-    description:
-      - Email.
-    required: false
-    default: None
   limit:
     description:
       - List limit.
     required: false
-    default: 25
+    default: 20
 """
 
 EXAMPLES = '''
-# List users
-- okta_user:
+# List apps
+- okta_apps_swa:
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    limit: 25
+    limit: 20
 
-# Create user
-- okta_user:
+# Create app
+- okta_apps_swa:
     action: create
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    login: "wchampion"
-    first_name: "Whitney"
-    last_name: "Champion"
-    email: "whitney@unicorns.lol"
-    password: "cookiesaredelicious"
-    activate: yes
+    label: "I Love Unicorns"
+    redirect_url: "https://iloveunicorns.lol/redirect"
+    login_url: "https://iloveunicorns.lol/signin"
 
-# Update user's email address
-- okta_user:
-    action: update
-    organization: "unicorns"
-    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    id: "01c5pEucucMPWXjFM456"
-    email: "whitney@ihateunicorns.lol"
-
-# Delete user
-- okta_user:
+# Delete app
+- okta_apps_swa:
     action: delete
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
@@ -130,73 +99,28 @@ url:
   sample: https://www.ansible.com/
 '''
 
-def create(module,base_url,api_key,login,password,email,first_name,last_name,activate):
+def create(module,base_url,api_key,label,login_url,redirect_url):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
     payload = {}
-    profile = {}
-    credentials = {}
-    password = {}
+    settings = {}
+    signOn = {}
 
-    if first_name is not None:
-        profile['first_name'] = first_name
-    if last_name is not None:
-        profile['last_name'] = last_name
-    if email is not None:
-        profile['email'] = email
-    if login is not None:
-        profile['login'] = login
-    if password is not None:
-        password['value'] = password
+    if label is not None:
+        payload['label'] = label
+    if login_url is not None:
+        signOn['loginUrl'] = login_url
+    if redirect_url is not None:
+        signOn['redirectUrl'] = redirect_url
 
-    credentials['password'] = password
-    payload['credentials'] = credentials
-    payload['profile'] = profile
+    settings['signOn'] = signOn
+    payload['settings'] = settings
+    payload['label'] = label
 
     url = base_url+"/?activate=%s" % (activate)
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=payload)
-
-    if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
-
-    try:
-        content = response.read()
-    except AttributeError:
-        content = info.pop('body', '')
-
-    return info['status'], info['msg'], content, url
-
-def update(module,base_url,api_key,id,login,password,email,first_name,last_name,activate):
-
-    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
-
-    url = base_url+"/?activate=%s" % (activate)
-
-    payload = {}
-    profile = {}
-    credentials = {}
-    password = {}
-
-    if first_name is not None:
-        profile['first_name'] = first_name
-    if last_name is not None:
-        profile['last_name'] = last_name
-    if email is not None:
-        profile['email'] = email
-    if login is not None:
-        profile['login'] = login
-    if password is not None:
-        password['value'] = password
-
-    credentials['password'] = password
-    payload['credentials'] = credentials
-    payload['profile'] = profile
-
-    url = base_url+"/%s" % (id)
-
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=payload)
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -250,15 +174,12 @@ def main():
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list']),
             id     = dict(type='str', default=None),
-            login    = dict(type='str', default=None),
-            password    = dict(type='str', default=None, no_log=True),
-            first_name  = dict(type='str', default=None),
-            last_name  = dict(type='str', default=None),
-            email       = dict(type='str', default=None),
-            limit     = dict(type='int', default=25),
-            activate   = dict(type='bool', default='yes')
+            login_url  = dict(type='str', default=None),
+            redirect_url  = dict(type='str', default=None),
+            label  = dict(type='str', default=None),
+            limit     = dict(type='int', default=20)
         )
     )
 
@@ -266,20 +187,15 @@ def main():
     api_key = module.params['api_key']
     action = module.params['action']
     id = module.params['id']
-    login = module.params['login']
-    password = module.params['password']
-    first_name = module.params['first_name']
-    last_name = module.params['last_name']
-    email = module.params['email']
+    login_url = module.params['login_url']
+    redirect_url = module.params['redirect_url']
+    label = module.params['label']
     limit = module.params['limit']
-    activate = module.params['activate']
 
-    base_url = "https://%s-admin.okta.com/api/v1/users" % (organization)
+    base_url = "https://%s-admin.okta.com/api/v1/apps" % (organization)
 
     if action == "create":
-        status, message, content, url = create(module,base_url,api_key,login,password,email,first_name,last_name,activate)
-    elif action == "update":
-        status, message, content, url = update(module,base_url,api_key,id,login,password,email,first_name,last_name,activate)
+        status, message, content, url = create(module,base_url,api_key,label,login_url,redirect_url)
     elif action == "delete":
         status, message, content, url = delete(module,base_url,api_key,id)
     elif action == "list":

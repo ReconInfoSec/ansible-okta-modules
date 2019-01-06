@@ -4,7 +4,7 @@
   tasks:
 
     - name: List users in Okta organization
-      okta_user:
+      okta_users:
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
       register: users
@@ -12,3 +12,13 @@
     - name: Print users
       debug:
         msg: "{{ users.json }}"
+
+    - name: List apps in Okta organization
+      okta_apps_swa:
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+      register: apps
+
+    - name: Print apps
+      debug:
+        msg: "{{ apps.json }}"
