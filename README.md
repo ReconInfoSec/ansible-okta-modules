@@ -14,6 +14,7 @@ There are currently 3 modules with the following actions:
   * deactivate
 * okta_groups
   * create
+  * update
   * delete
   * list
   * add_user

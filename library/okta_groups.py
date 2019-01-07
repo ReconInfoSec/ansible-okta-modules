@@ -30,7 +30,7 @@ options:
       - Action to take against groups API.
     required: false
     default: list
-    choices: [ create, delete, list, add_user, remove_user ]
+    choices: [ create, update, delete, list, add_user, remove_user ]
   id:
     description:
       - ID of the group.
@@ -72,6 +72,15 @@ EXAMPLES = '''
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     name: "Imaginary Creatures"
     description: "They are so majestic"
+
+# Update group
+- okta_groups:
+    action: update
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM457"
+    name: "Imaginary Creatures"
+    description: "They are so majestic and beautiful"
 
 # Add user to group
 - okta_groups:
@@ -136,6 +145,34 @@ def create(module,base_url,api_key,name,description):
     url = base_url
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def update(module,base_url,api_key,id,name,description):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    payload = {}
+    profile = {}
+
+    if name is not None:
+        profile['name'] = name
+    if description is not None:
+        profile['description'] = description
+
+    payload['profile'] = profile
+
+    url = base_url+"/%s" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -223,7 +260,7 @@ def main():
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list', 'add_user', 'remove_user']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'add_user', 'remove_user']),
             id     = dict(type='str', default=None),
             user_id     = dict(type='str', default=None),
             name    = dict(type='str', default=None),
@@ -245,6 +282,8 @@ def main():
 
     if action == "create":
         status, message, content, url = create(module,base_url,api_key,name,description)
+    elif action == "update":
+        status, message, content, url = update(module,base_url,api_key,id,name,description)
     elif action == "delete":
         status, message, content, url = delete(module,base_url,api_key,id)
     elif action == "list":
