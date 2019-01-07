@@ -69,7 +69,7 @@
         api_key: "{{ api_key }}"
         id: "{{ okta_app.json.id }}"
 
-    - name: Assign new app to new group
+    - name: Assign new group to new app
       okta_apps_swa:
         action: assign_group
         organization: "{{ organization }}"
