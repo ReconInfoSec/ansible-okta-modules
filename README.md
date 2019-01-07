@@ -92,3 +92,22 @@ More examples can be found in `main.yml`.
   debug:
     msg: "{{ okta_app.json }}"
 ```
+
+#### Update SWA app
+
+```
+- name: Update Okta app authentication scheme 
+  okta_apps_swa:
+    action: update
+    organization: "{{ organization }}"
+    api_key: "{{ api_key }}"
+    id: "{{ okta_app.json.id }}"
+    scheme: "SHARED_USERNAME_AND_PASSWORD"
+    username: "analyst_user"
+    password: "analyst_shared_password"
+  register: okta_app
+
+- name: Print app information
+  debug:
+    msg: "{{ okta_app.json }}"
+```
