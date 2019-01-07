@@ -11,7 +11,7 @@ There are currently 3 modules:
 
 ### Examples
 
-More examples can be found in `main.py`.
+More examples can be found in `main.yml`.
 
 #### Create User
 
