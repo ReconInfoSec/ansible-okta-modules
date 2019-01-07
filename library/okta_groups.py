@@ -30,7 +30,7 @@ options:
       - Action to take against groups API.
     required: false
     default: list
-    choices: [ create, update, delete, list ]
+    choices: [ create, delete, list, add_user, remove_user ]
   id:
     description:
       - ID of the group.
@@ -51,6 +51,11 @@ options:
       - List limit.
     required: false
     default: 200
+  user_id:
+    description:
+      - ID of user to add to group.
+    required: false
+    default: None
 """
 
 EXAMPLES = '''
@@ -68,12 +73,28 @@ EXAMPLES = '''
     name: "Imaginary Creatures"
     description: "They are so majestic"
 
+# Add user to group
+- okta_groups:
+    action: add_user
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM457"
+    user_id: "01c5pEucucMPWXjFM456"
+
+# Remove user from group
+- okta_groups:
+    action: remove_user
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM457"
+    user_id: "01c5pEucucMPWXjFM456"
+
 # Delete group
 - okta_groups:
     action: delete
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    id: "01c5pEucucMPWXjFM456"
+    id: "01c5pEucucMPWXjFM457"
 '''
 
 RETURN = r'''
@@ -114,7 +135,7 @@ def create(module,base_url,api_key,name,description):
 
     url = base_url
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=payload)
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -132,10 +153,9 @@ def delete(module,base_url,api_key,id):
 
     url = base_url+"/%s" % (id)
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # deactivate
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # delete
 
-    if info['status'] != 200:
+    if info['status'] != 204:
         module.fail_json(msg="Fail: %s" % (info['msg']))
 
     try:
@@ -163,13 +183,49 @@ def list(module,base_url,api_key,limit):
 
     return info['status'], info['msg'], content, url
 
+def add_user(module,base_url,api_key,id,user_id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/users/%s" % (id,user_id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT')
+
+    if info['status'] != 204:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def remove_user(module,base_url,api_key,id,user_id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/users/%s" % (id,user_id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
+
+    if info['status'] != 204:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list', 'add_user', 'remove_user']),
             id     = dict(type='str', default=None),
+            user_id     = dict(type='str', default=None),
             name    = dict(type='str', default=None),
             description    = dict(type='str', default=None),
             limit    = dict(type='int', default=200)
@@ -180,6 +236,7 @@ def main():
     api_key = module.params['api_key']
     action = module.params['action']
     id = module.params['id']
+    user_id = module.params['user_id']
     name = module.params['name']
     description = module.params['description']
     limit = module.params['limit']
@@ -192,10 +249,18 @@ def main():
         status, message, content, url = delete(module,base_url,api_key,id)
     elif action == "list":
         status, message, content, url = list(module,base_url,api_key,limit)
+    elif action == "add_user":
+        status, message, content, url = add_user(module,base_url,api_key,id,user_id)
+    elif action == "remove_user":
+        status, message, content, url = remove_user(module,base_url,api_key,id,user_id)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
-    js = json.loads(content)
+
+    try:
+        js = json.loads(content)
+    except ValueError, e:
+        js = ""
 
     uresp['json'] = js
     uresp['status'] = status

@@ -30,7 +30,7 @@ options:
       - Action to take against apps API.
     required: false
     default: list
-    choices: [ create, update, delete, list ]
+    choices: [ create, update, delete, list, assign_user, remove_user, assign_group, remove_group, activate, deactivate ]
   id:
     description:
       - ID of the app.
@@ -51,6 +51,11 @@ options:
       - List limit.
     required: false
     default: 20
+  group_id:
+    description:
+      - Group ID to assign an app to.
+    required: false
+    default: 20
 """
 
 EXAMPLES = '''
@@ -69,12 +74,60 @@ EXAMPLES = '''
     redirect_url: "https://iloveunicorns.lol/redirect"
     login_url: "https://iloveunicorns.lol/signin"
 
+# Activate app
+- okta_apps_swa:
+    action: activate
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+
+# Dectivate app
+- okta_apps_swa:
+    action: deactivate
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+
 # Delete app
 - okta_apps_swa:
     action: delete
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
+
+# Assign an app to a group
+- okta_apps_swa:
+    action: assign_group
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    group_id: "01c5pEucucMPWXjFM457"
+
+# Remove a group from an app
+- okta_apps_swa:
+    action: remove_group
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    group_id: "01c5pEucucMPWXjFM457"
+
+# Assign an app to a user
+- okta_apps_swa:
+    action: assign_user
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    user_id: "01c5pEucucMPWXjFM456"
+    send_email: "false"
+
+# Remove a user from an app
+- okta_apps_swa:
+    action: remove_user
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    user_id: "01c5pEucucMPWXjFM456"
+    send_email: "false"
 '''
 
 RETURN = r'''
@@ -107,6 +160,16 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
     settings = {}
     signOn = {}
 
+    hide = {}
+    hide['iOS'] = "false"
+    hide['web'] = "false"
+
+    visibility = {}
+    visibility['autoSubmitToolbar'] = "false"
+    visibility['hide'] = hide
+
+    features = []
+
     if label is not None:
         payload['label'] = label
     if login_url is not None:
@@ -115,12 +178,14 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
         signOn['redirectUrl'] = redirect_url
 
     settings['signOn'] = signOn
+    payload['signOnMode'] = "AUTO_LOGIN"
+    payload['features'] = features
+    payload['visibility'] = visibility
     payload['settings'] = settings
-    payload['label'] = label
 
-    url = base_url+"/?activate=%s" % (activate)
+    url = base_url
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=payload)
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -138,10 +203,9 @@ def delete(module,base_url,api_key,id):
 
     url = base_url+"/%s" % (id)
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # deactivate
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # delete
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
-    if info['status'] != 200:
+    if info['status'] != 204:
         module.fail_json(msg="Fail: %s" % (info['msg']))
 
     try:
@@ -169,17 +233,128 @@ def list(module,base_url,api_key,limit):
 
     return info['status'], info['msg'], content, url
 
+def assign_group(module,base_url,api_key,group_id,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/groups/%s" % (id,group_id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT')
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def remove_group(module,base_url,api_key,group_id,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/groups/%s" % (id,group_id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
+
+    if info['status'] != 204:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def assign_user(module,base_url,api_key,user_id,id,send_email):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/users/%s?sendEmail=%s" % (id,user_id,send_email)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def remove_user(module,base_url,api_key,user_id,id,send_email):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/users/%s?sendEmail=%s" % (id,user_id,send_email)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
+
+    if info['status'] != 204:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def activate(module,base_url,api_key,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/lifecycle/activate" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def deactivate(module,base_url,api_key,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/lifecycle/deactivate" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list', 'assign_group', 'remove_group', 'assign_user', 'remove_user', 'activate', 'deactivate']),
             id     = dict(type='str', default=None),
+            group_id     = dict(type='str', default=None),
+            user_id     = dict(type='str', default=None),
             login_url  = dict(type='str', default=None),
             redirect_url  = dict(type='str', default=None),
             label  = dict(type='str', default=None),
-            limit     = dict(type='int', default=20)
+            limit     = dict(type='int', default=20),
+            send_email     = dict(type='str', required=False, default='false')
         )
     )
 
@@ -187,23 +362,43 @@ def main():
     api_key = module.params['api_key']
     action = module.params['action']
     id = module.params['id']
+    group_id = module.params['group_id']
+    user_id = module.params['user_id']
     login_url = module.params['login_url']
     redirect_url = module.params['redirect_url']
     label = module.params['label']
     limit = module.params['limit']
+    send_email = module.params['send_email']
 
     base_url = "https://%s-admin.okta.com/api/v1/apps" % (organization)
 
     if action == "create":
         status, message, content, url = create(module,base_url,api_key,label,login_url,redirect_url)
     elif action == "delete":
+        status, message, content, url = deactivate(module,base_url,api_key,id)
         status, message, content, url = delete(module,base_url,api_key,id)
     elif action == "list":
         status, message, content, url = list(module,base_url,api_key,limit)
+    elif action == "assign_group":
+        status, message, content, url = assign_group(module,base_url,api_key,group_id,id)
+    elif action == "remove_group":
+        status, message, content, url = remove_group(module,base_url,api_key,group_id,id)
+    elif action == "assign_user":
+        status, message, content, url = assign_user(module,base_url,api_key,user_id,id,send_email)
+    elif action == "remove_user":
+        status, message, content, url = remove_user(module,base_url,api_key,user_id,id,send_email)
+    elif action == "activate":
+        status, message, content, url = activate(module,base_url,api_key,id)
+    elif action == "deactivate":
+        status, message, content, url = deactivate(module,base_url,api_key,id)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
-    js = json.loads(content)
+
+    try:
+        js = json.loads(content)
+    except ValueError, e:
+        js = ""
 
     uresp['json'] = js
     uresp['status'] = status

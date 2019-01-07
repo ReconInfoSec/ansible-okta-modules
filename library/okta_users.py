@@ -66,6 +66,11 @@ options:
       - Email.
     required: false
     default: None
+  group_ids:
+    description:
+      - List of Group IDs to add the user to.
+    required: false
+    default: None
   limit:
     description:
       - List limit.
@@ -85,12 +90,43 @@ EXAMPLES = '''
     action: create
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    login: "wchampion"
+    login: "whitney@unicorns.lol"
     first_name: "Whitney"
     last_name: "Champion"
     email: "whitney@unicorns.lol"
     password: "cookiesaredelicious"
     activate: yes
+
+# Create user in group(s)
+- okta_users:
+    action: create
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    login: "whitney@unicorns.lol"
+    first_name: "Whitney"
+    last_name: "Champion"
+    email: "whitney@unicorns.lol"
+    password: "cookiesaredelicious"
+    group_ids:
+      - "00f5b3gqiLpE114tV2M7"
+    activate: yes
+
+# Create multiple users in group
+- okta_users:
+    action: create
+    organization: "crypto"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    login: "{{ item.login }}"
+    first_name: "{{ item.first_name }}"
+    last_name: "{{ item.last_name }}"
+    email: "{{ item.email }}"
+    password: "{{ item.password }}"
+    group_ids:
+      - "00f5b3gqiLpE324tV2M7"
+    activate: "{{ item.activate }}"
+  with_items:
+    - { login: "alice@aol.com", first_name: "Alice", last_name: "A", email: "alice@aolcom", password: "ilovebob111", activate: yes }
+    - { login: "bob@aol.com", first_name: "Bob", last_name: "B", email: "bob@aolcom", password: "ilovealice111", activate: yes }
 
 # Update user's email address
 - okta_users:
@@ -99,6 +135,20 @@ EXAMPLES = '''
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
     email: "whitney@ihateunicorns.lol"
+
+# Activate user
+- okta_users:
+    action: activate
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+
+# Deactivate user
+- okta_users:
+    action: deactivate
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
 
 # Delete user
 - okta_users:
@@ -130,7 +180,7 @@ url:
   sample: https://www.ansible.com/
 '''
 
-def create(module,base_url,api_key,login,password,email,first_name,last_name,activate):
+def create(module,base_url,api_key,login,password_input,email,first_name,last_name,group_ids,activate):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
@@ -138,25 +188,29 @@ def create(module,base_url,api_key,login,password,email,first_name,last_name,act
     profile = {}
     credentials = {}
     password = {}
+    groupIds= []
 
     if first_name is not None:
-        profile['first_name'] = first_name
+        profile['firstName'] = first_name
     if last_name is not None:
-        profile['last_name'] = last_name
+        profile['lastName'] = last_name
     if email is not None:
         profile['email'] = email
     if login is not None:
         profile['login'] = login
-    if password is not None:
-        password['value'] = password
+    if password_input is not None:
+        password['value'] = password_input
+    if group_ids is not None:
+        groupIds = group_ids
 
     credentials['password'] = password
     payload['credentials'] = credentials
+    payload['groupIds'] = groupIds
     payload['profile'] = profile
 
-    url = base_url+"/?activate=%s" % (activate)
+    url = base_url+"?activate=%s" % (activate)
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=payload)
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -168,35 +222,29 @@ def create(module,base_url,api_key,login,password,email,first_name,last_name,act
 
     return info['status'], info['msg'], content, url
 
-def update(module,base_url,api_key,id,login,password,email,first_name,last_name,activate):
+def update(module,base_url,api_key,id,login,email,first_name,last_name):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
-    url = base_url+"/?activate=%s" % (activate)
+    url = base_url
 
     payload = {}
     profile = {}
-    credentials = {}
-    password = {}
 
     if first_name is not None:
-        profile['first_name'] = first_name
+        profile['firstName'] = first_name
     if last_name is not None:
-        profile['last_name'] = last_name
+        profile['lastName'] = last_name
     if email is not None:
         profile['email'] = email
     if login is not None:
         profile['login'] = login
-    if password is not None:
-        password['value'] = password
 
-    credentials['password'] = password
-    payload['credentials'] = credentials
     payload['profile'] = profile
 
     url = base_url+"/%s" % (id)
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=payload)
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -216,6 +264,42 @@ def delete(module,base_url,api_key,id):
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # deactivate
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # delete
+
+    if info['status'] != 204:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def activate(module,base_url,api_key,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/lifecycle/activate" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def deactivate(module,base_url,api_key,id):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    url = base_url+"/%s/lifecycle/deactivate" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -250,13 +334,14 @@ def main():
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'activate', 'deactivate']),
             id     = dict(type='str', default=None),
             login    = dict(type='str', default=None),
             password    = dict(type='str', default=None, no_log=True),
             first_name  = dict(type='str', default=None),
             last_name  = dict(type='str', default=None),
             email       = dict(type='str', default=None),
+            group_ids       = dict(type='list', default=None),
             limit     = dict(type='int', default=25),
             activate   = dict(type='bool', default='yes')
         )
@@ -271,23 +356,32 @@ def main():
     first_name = module.params['first_name']
     last_name = module.params['last_name']
     email = module.params['email']
+    group_ids = module.params['group_ids']
     limit = module.params['limit']
     activate = module.params['activate']
 
     base_url = "https://%s-admin.okta.com/api/v1/users" % (organization)
 
     if action == "create":
-        status, message, content, url = create(module,base_url,api_key,login,password,email,first_name,last_name,activate)
+        status, message, content, url = create(module,base_url,api_key,login,password,email,first_name,last_name,group_ids,activate)
     elif action == "update":
-        status, message, content, url = update(module,base_url,api_key,id,login,password,email,first_name,last_name,activate)
+        status, message, content, url = update(module,base_url,api_key,id,login,email,first_name,last_name)
     elif action == "delete":
         status, message, content, url = delete(module,base_url,api_key,id)
+    elif action == "activate":
+        status, message, content, url = activate(module,base_url,api_key,id)
+    elif action == "deactivate":
+        status, message, content, url = deactivate(module,base_url,api_key,id)
     elif action == "list":
         status, message, content, url = list(module,base_url,api_key,limit)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
-    js = json.loads(content)
+
+    try:
+        js = json.loads(content)
+    except ValueError, e:
+        js = ""
 
     uresp['json'] = js
     uresp['status'] = status
