@@ -6,8 +6,8 @@
     - name: Create Okta group
       okta_groups:
         action: "create"
-        name: "Test"
-        description: ""
+        name: "My App"
+        description: "My App Description"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
       register: okta_group
@@ -21,14 +21,14 @@
         action: create
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
-        login: "whitney.ellis.champion@gmail.com"
-        first_name: "Whitney"
-        last_name: "Champion"
+        login: "{{ login }}"
+        first_name: "First"
+        last_name: "Last"
         activate: true
         password: "{{ password }}"
         group_ids:
           - "{{ okta_group.json.id }}"
-        email: "whitney.ellis.champion@gmail.com"
+        email: ""
       register: okta_user
 
     - name: Print user information
@@ -41,7 +41,7 @@
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
         id: "{{ okta_user.json.id }}"
-        email: "whitney.ellis.champion+new@gmail.com"
+        email: "{{ email }}"
       register: okta_user
 
     - name: Print user information
@@ -51,11 +51,11 @@
     - name: Create Okta app
       okta_apps_swa:
         action: create
-        label: "Ansible Test"
+        label: "Ansible Test App"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
-        login_url: "https://unicorns.lol/login"
-        redirect_url: "https://unicorns.lol/redirect"
+        login_url: "{{ login_url }}"
+        redirect_url: "{{ redirect_url }}"
       register: okta_app
 
     - name: Print app information
