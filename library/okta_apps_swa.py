@@ -30,7 +30,7 @@ options:
       - Action to take against apps API.
     required: false
     default: list
-    choices: [ create, update, delete, list, assign_user, remove_user, assign_group, remove_group, activate, deactivate ]
+    choices: [ create, delete, list, assign_user, remove_user, assign_group, remove_group, activate, deactivate ]
   id:
     description:
       - ID of the app.

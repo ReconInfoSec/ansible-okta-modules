@@ -30,7 +30,7 @@ options:
       - Action to take against user API.
     required: false
     default: list
-    choices: [ create, update, delete, list ]
+    choices: [ create, update, delete, list, activate, deactivate ]
   id:
     description:
       - ID of the user.

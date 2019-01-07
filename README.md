@@ -3,11 +3,31 @@ Ansible modules for the Okta API
 
 ### Modules
 
-There are currently 3 modules:
+There are currently 3 modules with the following actions:
 
 * okta_users
+  * create
+  * update
+  * delete
+  * list
+  * activate
+  * deactivate
 * okta_groups
+  * create
+  * delete
+  * list
+  * add_user
+  * remove_user
 * okta_apps_swa
+  * create
+  * delete
+  * list
+  * activate
+  * deactivate
+  * assign_user
+  * remove_user
+  * assign_group
+  * remove_group
 
 ### Examples
 
