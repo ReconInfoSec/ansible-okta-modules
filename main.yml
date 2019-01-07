@@ -64,7 +64,7 @@
 
     - name: Update Okta app
       okta_apps_swa:
-        action: create
+        action: update
         label: "Ansible Test App"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
