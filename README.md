@@ -7,20 +7,21 @@ There are currently 3 modules with the following actions:
 
 * okta_users
   * create
-  * update
+  * update - updates login, email, first_name, last_name
   * delete
   * list
   * activate
   * deactivate
 * okta_groups
   * create
-  * update
+  * update - updates name, description
   * delete
   * list
   * add_user
   * remove_user
 * okta_apps_swa
   * create
+  * update - updates schema, username, password, label, login_url, redirect_url
   * delete
   * list
   * activate

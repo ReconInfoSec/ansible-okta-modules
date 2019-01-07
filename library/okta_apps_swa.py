@@ -30,10 +30,15 @@ options:
       - Action to take against apps API.
     required: false
     default: list
-    choices: [ create, delete, list, assign_user, remove_user, assign_group, remove_group, activate, deactivate ]
+    choices: [ create, update, delete, list, assign_user, remove_user, assign_group, remove_group, activate, deactivate ]
   id:
     description:
       - ID of the app.
+    required: false
+    default: None
+  label:
+    description:
+      - App label.
     required: false
     default: None
   login_url:
@@ -56,6 +61,21 @@ options:
       - Group ID to assign an app to.
     required: false
     default: 20
+  scheme:
+    description:
+      - Authentication scheme.
+    required: false
+    default: None
+  username:
+    description:
+      - Username for the app, requires scheme to be defined.
+    required: false
+    default: None
+  password:
+    description:
+      - Password for the app, requires scheme to be defined.
+    required: false
+    default: None
 """
 
 EXAMPLES = '''
@@ -71,6 +91,33 @@ EXAMPLES = '''
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     label: "I Love Unicorns"
+    redirect_url: "https://iloveunicorns.lol/redirect"
+    login_url: "https://iloveunicorns.lol/signin"
+
+# Update app to use shared username and password set by Okta admin
+- okta_apps_swa:
+    action: update
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    scheme: "SHARED_USERNAME_AND_PASSWORD"
+    username: "analyst_user"
+    password: "shared_analyst_password"
+
+# Update app to use passwords set by Okta admin
+- okta_apps_swa:
+    action: update
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
+    scheme: "ADMIN_SETS_CREDENTIALS"
+
+# Update app login and redirect URLs
+- okta_apps_swa:
+    action: update
+    organization: "unicorns"
+    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
+    id: "01c5pEucucMPWXjFM456"
     redirect_url: "https://iloveunicorns.lol/redirect"
     login_url: "https://iloveunicorns.lol/signin"
 
@@ -159,16 +206,15 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
     payload = {}
     settings = {}
     signOn = {}
-
+    features = []
     hide = {}
+
     hide['iOS'] = "false"
     hide['web'] = "false"
 
     visibility = {}
     visibility['autoSubmitToolbar'] = "false"
     visibility['hide'] = hide
-
-    features = []
 
     if label is not None:
         payload['label'] = label
@@ -186,6 +232,56 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
     url = base_url
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
+
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % (info['msg']))
+
+    try:
+        content = response.read()
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+def update(module,base_url,api_key,label,login_url,redirect_url,id,scheme,username,password_input):
+
+    headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
+
+    payload = {}
+    password = {}
+
+    url = base_url+"/%s" % (id)
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET', data=module.jsonify(payload))
+
+    try:
+        content = response.read()
+        payload = json.loads(content)
+    except AttributeError:
+        content = info.pop('body', '')
+
+    if label is not None:
+        payload['label'] = label
+    if login_url is not None:
+        payload['settings']['signOn']['loginUrl'] = login_url
+    if redirect_url is not None:
+        payload['settings']['signOn']['redirect_url'] = redirect_url
+
+    if (scheme is not None) and (username is not None) and (password_input is not None):
+        payload['credentials']['scheme'] = scheme
+        payload['credentials']['userName'] = username
+        password['value'] = password_input
+        payload['credentials']['password'] = password
+    elif scheme is not None:
+        credentials = {}
+        userNameTemplate = {}
+        userNameTemplate['template'] = "${source.login}"
+        userNameTemplate['type'] = "BUILT_IN"
+        credentials['scheme'] = scheme
+        credentials['userNameTemplate'] = userNameTemplate
+        payload['credentials'] = credentials
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -346,15 +442,18 @@ def main():
         argument_spec = dict(
             organization      = dict(type='str', required=False, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'delete', 'list', 'assign_group', 'remove_group', 'assign_user', 'remove_user', 'activate', 'deactivate']),
+            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'assign_group', 'remove_group', 'assign_user', 'remove_user', 'activate', 'deactivate']),
             id     = dict(type='str', default=None),
             group_id     = dict(type='str', default=None),
             user_id     = dict(type='str', default=None),
             login_url  = dict(type='str', default=None),
             redirect_url  = dict(type='str', default=None),
             label  = dict(type='str', default=None),
+            scheme  = dict(type='str', default=None, choices=['ADMIN_SETS_CREDENTIALS', 'EDIT_PASSWORD_ONLY', 'EDIT_USERNAME_AND_PASSWORD', 'EXTERNAL_PASSWORD_SYNC	', 'SHARED_USERNAME_AND_PASSWORD']),
+            username  = dict(type='str', default=None),
+            password  = dict(type='str', default=None, no_log=True),
             limit     = dict(type='int', default=20),
-            send_email     = dict(type='str', required=False, default='false')
+            send_email     = dict(type='str', default='false')
         )
     )
 
@@ -368,12 +467,17 @@ def main():
     redirect_url = module.params['redirect_url']
     label = module.params['label']
     limit = module.params['limit']
+    scheme = module.params['scheme']
+    username = module.params['username']
+    password = module.params['password']
     send_email = module.params['send_email']
 
     base_url = "https://%s-admin.okta.com/api/v1/apps" % (organization)
 
     if action == "create":
         status, message, content, url = create(module,base_url,api_key,label,login_url,redirect_url)
+    elif action == "update":
+        status, message, content, url = update(module,base_url,api_key,label,login_url,redirect_url,id,scheme,username,password)
     elif action == "delete":
         status, message, content, url = deactivate(module,base_url,api_key,id)
         status, message, content, url = delete(module,base_url,api_key,id)
