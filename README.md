@@ -53,7 +53,7 @@ More examples can be found in `main.yml`.
 
 - name: Print user information
   debug:
-    msg: "{{ okta_user.json.id }}"
+    msg: "{{ okta_user.json }}"
 ```
 
 #### Create Group
@@ -70,7 +70,7 @@ More examples can be found in `main.yml`.
 
 - name: Print group information
   debug:
-    msg: "{{ okta_group.json.id }}"
+    msg: "{{ okta_group.json }}"
 ```
 
 #### Create custom SWA app
@@ -88,5 +88,5 @@ More examples can be found in `main.yml`.
 
 - name: Print app information
   debug:
-    msg: "{{ okta_app.json.id }}"
+    msg: "{{ okta_app.json }}"
 ```
