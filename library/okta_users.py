@@ -226,7 +226,7 @@ def update(module,base_url,api_key,id,login,email,first_name,last_name):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
-    url = base_url
+    url = base_url+"/%s" % (id)
 
     payload = {}
     profile = {}
@@ -241,8 +241,6 @@ def update(module,base_url,api_key,id,login,email,first_name,last_name):
         profile['login'] = login
 
     payload['profile'] = profile
-
-    url = base_url+"/%s" % (id)
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -262,8 +260,7 @@ def delete(module,base_url,api_key,id):
 
     url = base_url+"/%s" % (id)
 
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # deactivate
-    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE') # delete
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
     if info['status'] != 204:
         module.fail_json(msg="Fail: %s" % (info['msg']))
@@ -332,7 +329,7 @@ def list(module,base_url,api_key,limit):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            organization      = dict(type='str', required=False, default=None),
+            organization      = dict(type='str', required=True, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
             action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'activate', 'deactivate']),
             id     = dict(type='str', default=None),
@@ -367,6 +364,7 @@ def main():
     elif action == "update":
         status, message, content, url = update(module,base_url,api_key,id,login,email,first_name,last_name)
     elif action == "delete":
+        status, message, content, url = deactivate(module,base_url,api_key,id)
         status, message, content, url = delete(module,base_url,api_key,id)
     elif action == "activate":
         status, message, content, url = activate(module,base_url,api_key,id)

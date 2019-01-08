@@ -258,7 +258,7 @@ def remove_user(module,base_url,api_key,id,user_id):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            organization      = dict(type='str', required=False, default=None),
+            organization      = dict(type='str', required=True, default=None),
             api_key       = dict(type='str', required=True, no_log=True),
             action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'add_user', 'remove_user']),
             id     = dict(type='str', default=None),
