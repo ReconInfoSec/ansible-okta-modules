@@ -18,12 +18,12 @@ options:
     description:
       - Okta subdomain for your organization. (i.e.
         mycompany.okta.com).
-    required: true
+    required: false
     default: None
   api_key:
     description:
       - Okta API key.
-    required: true
+    required: false
     default: None
   action:
     description:
@@ -329,9 +329,9 @@ def list(module,base_url,api_key,limit):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            organization      = dict(type='str', required=True, default=None),
-            api_key       = dict(type='str', required=True, no_log=True),
-            action         = dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'activate', 'deactivate']),
+            organization      = dict(type='str', default=None),
+            api_key       = dict(type='str', no_log=True),
+            action         = dict(type='str', default='list', choices=['create', 'update', 'delete', 'list', 'activate', 'deactivate']),
             id     = dict(type='str', default=None),
             login    = dict(type='str', default=None),
             password    = dict(type='str', default=None, no_log=True),

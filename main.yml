@@ -6,10 +6,10 @@
     - name: Create Okta group
       okta_groups:
         action: "create"
-        name: "My App"
-        description: "My App Description"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
+        name: "My App"
+        description: "My App Description"
       register: okta_group
 
     - name: Print group information
@@ -51,9 +51,9 @@
     - name: Create Okta app
       okta_apps_swa:
         action: create
-        label: "Ansible Test App"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
+        label: "Ansible Test App"
         login_url: "{{ login_url }}"
         redirect_url: "{{ redirect_url }}"
       register: okta_app
@@ -65,9 +65,9 @@
     - name: Update Okta app
       okta_apps_swa:
         action: update
-        label: "Ansible Test App"
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
+        label: "Ansible Test App"
         id: "{{ okta_app.json.id }}"
         schema: "ADMIN_SETS_CREDENTIALS"
       register: okta_app
