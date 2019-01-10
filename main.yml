@@ -46,6 +46,40 @@
         redirect_url: "{{ redirect_url }}"
       register: okta_swa_app
 
+    - name: Update SWA app
+      okta_apps_swa:
+        action: update
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        label: "Ansible Test App"
+        id: "{{ okta_swa_app.json.id }}"
+        scheme: "ADMIN_SETS_CREDENTIALS"
+      register: okta_swa_app
+
+    - name: Assign new group to new SWA app
+      okta_apps:
+        action: assign_group
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        id: "{{ okta_swa_app.json.id }}"
+        group_id: "{{ okta_group.json.id }}"
+      register: okta_assignment
+
+    - name: Remove group from SWA app
+      okta_apps:
+        action: remove_group
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        id: "{{ okta_swa_app.json.id }}"
+        group_id: "{{ okta_group.json.id }}"
+
+    - name: Remove SWA app
+      okta_apps:
+        action: delete
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        id: "{{ okta_swa_app.json.id }}"
+
     - name: Create SAML app
       okta_apps_saml:
         action: create
@@ -59,33 +93,29 @@
         destination: "https://app.unicorns.lol/saml/acs"
       register: okta_saml_app
 
-    - name: Update SWA app
-      okta_apps_swa:
-        action: update
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        label: "Ansible Test App"
-        id: "{{ okta_swa_app.json.id }}"
-        schema: "ADMIN_SETS_CREDENTIALS"
-      register: okta_swa_app
-
-    - name: Assign new group to new SWA app
-      okta_apps_swa:
-        action: assign_group
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        id: "{{ okta_swa_app.json.id }}"
-        group_id: "{{ okta_group.json.id }}"
-      register: okta_assignment
-
     - name: Assign new group to new SAML app
-      okta_apps_saml:
+      okta_apps:
         action: assign_group
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
         id: "{{ okta_saml_app.json.id }}"
         group_id: "{{ okta_group.json.id }}"
       register: okta_assignment
+
+    - name: Remove group from SAML app
+      okta_apps:
+        action: remove_group
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        id: "{{ okta_saml_app.json.id }}"
+        group_id: "{{ okta_group.json.id }}"
+
+    - name: Remove SAML app
+      okta_apps:
+        action: delete
+        organization: "{{ organization }}"
+        api_key: "{{ api_key }}"
+        id: "{{ okta_saml_app.json.id }}"
 
     - name: Remove user from group
       okta_groups:
@@ -94,22 +124,6 @@
         api_key: "{{ api_key }}"
         id: "{{ okta_group.json.id }}"
         user_id: "{{ okta_user.json.id }}"
-
-    - name: Remove group from SWA app
-      okta_apps_swa:
-        action: remove_group
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        id: "{{ okta_swa_app.json.id }}"
-      group_id: "{{ okta_group.json.id }}"
-
-    - name: Remove group from SAML app
-      okta_apps_saml:
-        action: remove_group
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        id: "{{ okta_saml_app.json.id }}"
-        group_id: "{{ okta_group.json.id }}"
 
     - name: Remove group
       okta_groups:
@@ -124,17 +138,3 @@
         organization: "{{ organization }}"
         api_key: "{{ api_key }}"
         id: "{{ okta_user.json.id }}"
-    
-    - name: Remove SWA app
-      okta_apps_swa:
-        action: delete
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        id: "{{ okta_swa_app.json.id }}"
-
-    - name: Remove SAML app
-      okta_apps_saml:
-        action: delete
-        organization: "{{ organization }}"
-        api_key: "{{ api_key }}"
-        id: "{{ okta_saml_app.json.id }}"

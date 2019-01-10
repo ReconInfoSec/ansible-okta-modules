@@ -28,17 +28,10 @@ The following modules are available with the corresponding actions:
 * okta_apps_swa
   * create
   * update
-  * delete
-  * list
-  * activate
-  * deactivate
-  * assign_user
-  * remove_user
-  * assign_group
-  * remove_group
 * okta_apps_saml
   * create
   * update
+* okta_apps
   * delete
   * list
   * activate
