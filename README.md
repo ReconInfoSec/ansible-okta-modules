@@ -25,7 +25,7 @@ There are currently 3 modules with the following actions:
   * remove_user
 * okta_apps_swa
   * create
-  * update - updates schema, username, password, label, login_url, redirect_url
+  * update 
   * delete
   * list
   * activate
@@ -36,7 +36,7 @@ There are currently 3 modules with the following actions:
   * remove_group
 * okta_apps_saml
   * create
-  * update - updates schema, username, password, label, login_url, redirect_url
+  * update
   * delete
   * list
   * activate
