@@ -34,6 +34,17 @@ There are currently 3 modules with the following actions:
   * remove_user
   * assign_group
   * remove_group
+* okta_apps_saml
+  * create
+  * update - updates schema, username, password, label, login_url, redirect_url
+  * delete
+  * list
+  * activate
+  * deactivate
+  * assign_user
+  * remove_user
+  * assign_group
+  * remove_group
 
 ### Examples
 
@@ -100,7 +111,7 @@ More examples can be found in `main.yml`.
 #### Update SWA app
 
 ```
-- name: Update Okta app authentication scheme 
+- name: Update Okta app authentication scheme
   okta_apps_swa:
     action: update
     organization: "{{ organization }}"

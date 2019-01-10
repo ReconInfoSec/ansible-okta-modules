@@ -7,8 +7,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 DOCUMENTATION = """
-module: okta_apps_swa
-short_description: Communicate with the Okta API to manage SWA applications
+module: okta_apps_saml
+short_description: Communicate with the Okta API to manage SAML applications
 description:
     - The Okta apps module manages Okta applications
 version_added: "1.0"
@@ -40,25 +40,15 @@ options:
     description:
       - Group ID to assign an app to.
     required: false
-    default: None
+    default: 20
   user_id:
     description:
-      - User ID to assign an app to.
+      - Group ID to assign an app to.
     required: false
-    default: None
+    default: 20
   label:
     description:
       - App label.
-    required: false
-    default: None
-  login_url:
-    description:
-      - Login URL for the app.
-    required: false
-    default: None
-  redirect_url:
-    description:
-      - Redirect URL for the app.
     required: false
     default: None
   limit:
@@ -66,94 +56,135 @@ options:
       - List limit.
     required: false
     default: 20
-  scheme:
+  defaultRelayState:
     description:
-      - Authentication scheme.
+      - Identifies a specific application resource in an IDP initiated Single Sign-On scenario. In most instances this is blank.
     required: false
     default: None
-  username:
+  ssoAcsUrl:
     description:
-      - Username for the app, requires scheme to be defined.
+      - The location where the SAML assertion is sent with a HTTP POST. This is often referred to as the SAML Assertion Consumer Service (ACS) URL for your application.
     required: false
     default: None
-  password:
+  idpIssuer:
     description:
-      - Password for the app, requires scheme to be defined.
+      - SAML IdP issuer ID.
     required: false
     default: None
-  send_email:
+  audience:
     description:
-      - Send email notification, true or false.
+      - The application-defined unique identifier that is the intended audience of the SAML assertion. This is most often the SP Entity ID of your application.
     required: false
-    default: "false"
+    default: None
+  recipient:
+    description:
+      - Recipient URL.
+    required: false
+    default: None
+  destination:
+    description:
+      - Destination URL.
+    required: false
+    default: None
+  subjectNameIdTemplate:
+    description:
+      - Application username template.
+    required: false
+    default: "${user.userName}"
+  subjectNameIdFormat:
+    description:
+      - Application username format.
+    required: false
+    default: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+  responseSigned:
+    description:
+      - Determines whether the SAML authentication response message is signed or not.
+    required: false
+    default: True
+  assertionSigned:
+    description:
+      - Determines whether the SAML assertion is signed or not.
+    required: false
+    default: True
+  signatureAlgorithm:
+    description:
+      - Signing algorithm to sign SAML assertion and response.
+    required: false
+    default: "RSA_SHA256"
+  digestAlgorithm:
+    description:
+      - Digest algorithm to sign SAML assertion and response.
+    required: false
+    default: "SHA256"
+  honorForceAuthn:
+    description:
+      - Prompt user to reauthenticate if SP asks for it.
+    required: false
+    default: True
+  authnContextClassRef:
+    description:
+      - SAML authentication context class.
+    required: false
+    default: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+  spIssuer:
+    description:
+      - SP issuer.
+    required: false
+    default: None
+  requestCompressed:
+    description:
+      - Request compressed, true or false.
+    required: false
+    default: False
+  attributeStatements:
+    description:
+      - Attribute statements.
+    required: false
+    default: None
 """
 
 EXAMPLES = '''
 # List apps
-- okta_apps_swa:
+- okta_apps_saml:
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     limit: 20
 
 # Create app
-- okta_apps_swa:
+- okta_apps_saml:
     action: create
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    label: "I Love Unicorns"
-    redirect_url: "https://iloveunicorns.lol/redirect"
-    login_url: "https://iloveunicorns.lol/signin"
-
-# Update app to use shared username and password set by Okta admin
-- okta_apps_swa:
-    action: update
-    organization: "unicorns"
-    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    id: "01c5pEucucMPWXjFM456"
-    scheme: "SHARED_USERNAME_AND_PASSWORD"
-    username: "analyst_user"
-    password: "shared_analyst_password"
-
-# Update app to use passwords set by Okta admin
-- okta_apps_swa:
-    action: update
-    organization: "unicorns"
-    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    id: "01c5pEucucMPWXjFM456"
-    scheme: "ADMIN_SETS_CREDENTIALS"
-
-# Update app login and redirect URLs
-- okta_apps_swa:
-    action: update
-    organization: "unicorns"
-    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    id: "01c5pEucucMPWXjFM456"
-    redirect_url: "https://iloveunicorns.lol/redirect"
-    login_url: "https://iloveunicorns.lol/signin"
+    label: "Unicorn Login"
+    ssoAcsUrl: "https://iloveunicorns.lol/saml/redirect"
+    idpIssuer: "http://www.okta.com/${org.externalKey}"
+    audience: "https://iloveunicorns.lol/saml/metadata"
+    recipient: "https://iloveunicorns.lol/saml/redirect"
+    destination: "https://iloveunicorns.lol/saml/redirect"
 
 # Activate app
-- okta_apps_swa:
+- okta_apps_saml:
     action: activate
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
 
 # Dectivate app
-- okta_apps_swa:
+- okta_apps_saml:
     action: deactivate
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
 
 # Delete app
-- okta_apps_swa:
+- okta_apps_saml:
     action: delete
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
     id: "01c5pEucucMPWXjFM456"
 
 # Assign an app to a group
-- okta_apps_swa:
+- okta_apps_saml:
     action: assign_group
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
@@ -161,7 +192,7 @@ EXAMPLES = '''
     group_id: "01c5pEucucMPWXjFM457"
 
 # Remove a group from an app
-- okta_apps_swa:
+- okta_apps_saml:
     action: remove_group
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
@@ -169,7 +200,7 @@ EXAMPLES = '''
     group_id: "01c5pEucucMPWXjFM457"
 
 # Assign an app to a user
-- okta_apps_swa:
+- okta_apps_saml:
     action: assign_user
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
@@ -178,7 +209,7 @@ EXAMPLES = '''
     send_email: "false"
 
 # Remove a user from an app
-- okta_apps_swa:
+- okta_apps_saml:
     action: remove_user
     organization: "unicorns"
     api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
@@ -209,7 +240,7 @@ url:
   sample: https://www.ansible.com/
 '''
 
-def create(module,base_url,api_key,label,login_url,redirect_url):
+def create(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,audience,recipient,destination,subjectNameIdTemplate,subjectNameIdFormat,responseSigned,assertionSigned,signatureAlgorithm,digestAlgorithm,honorForceAuthn,authnContextClassRef,spIssuer,requestCompressed,attributeStatements):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
@@ -228,13 +259,43 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
 
     if label is not None:
         payload['label'] = label
-    if login_url is not None:
-        signOn['loginUrl'] = login_url
-    if redirect_url is not None:
-        signOn['redirectUrl'] = redirect_url
+    if defaultRelayState is not None:
+        signOn['defaultRelayState'] = defaultRelayState
+    if ssoAcsUrl is not None:
+        signOn['ssoAcsUrl'] = ssoAcsUrl
+    if idpIssuer is not None:
+        signOn['idpIssuer'] = idpIssuer
+    if audience is not None:
+        signOn['audience'] = audience
+    if recipient is not None:
+        signOn['recipient'] = recipient
+    if destination is not None:
+        signOn['destination'] = destination
+    if subjectNameIdTemplate is not None:
+        signOn['subjectNameIdTemplate'] = subjectNameIdTemplate
+    if subjectNameIdFormat is not None:
+        signOn['subjectNameIdFormat'] = subjectNameIdFormat
+    if responseSigned is not None:
+        signOn['responseSigned'] = responseSigned
+    if assertionSigned is not None:
+        signOn['assertionSigned'] = assertionSigned
+    if signatureAlgorithm is not None:
+        signOn['signatureAlgorithm'] = signatureAlgorithm
+    if digestAlgorithm is not None:
+        signOn['digestAlgorithm'] = digestAlgorithm
+    if honorForceAuthn is not None:
+        signOn['honorForceAuthn'] = honorForceAuthn
+    if authnContextClassRef is not None:
+        signOn['authnContextClassRef'] = authnContextClassRef
+    if spIssuer is not None:
+        signOn['spIssuer'] = spIssuer
+    if requestCompressed is not None:
+        signOn['requestCompressed'] = requestCompressed
+    if attributeStatements is not None:
+        signOn['attributeStatements'] = attributeStatements
 
     settings['signOn'] = signOn
-    payload['signOnMode'] = "AUTO_LOGIN"
+    payload['signOnMode'] = "SAML_2_0"
     payload['features'] = features
     payload['visibility'] = visibility
     payload['settings'] = settings
@@ -253,12 +314,11 @@ def create(module,base_url,api_key,label,login_url,redirect_url):
 
     return info['status'], info['msg'], content, url
 
-def update(module,base_url,api_key,label,login_url,redirect_url,id,scheme,username,password_input):
+def update(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,audience,recipient,destination,subjectNameIdTemplate,subjectNameIdFormat,responseSigned,assertionSigned,signatureAlgorithm,digestAlgorithm,honorForceAuthn,authnContextClassRef,spIssuer,requestCompressed,attributeStatements):
 
     headers = '{ "Content-Type": "application/json", "Authorization": "SSWS %s", "Accept": "application/json" }' % (api_key)
 
     payload = {}
-    password = {}
 
     url = base_url+"/%s" % (id)
 
@@ -272,24 +332,40 @@ def update(module,base_url,api_key,label,login_url,redirect_url,id,scheme,userna
 
     if label is not None:
         payload['label'] = label
-    if login_url is not None:
-        payload['settings']['signOn']['loginUrl'] = login_url
-    if redirect_url is not None:
-        payload['settings']['signOn']['redirect_url'] = redirect_url
-
-    if (scheme is not None) and (username is not None) and (password_input is not None):
-        payload['credentials']['scheme'] = scheme
-        payload['credentials']['userName'] = username
-        password['value'] = password_input
-        payload['credentials']['password'] = password
-    elif scheme is not None:
-        credentials = {}
-        userNameTemplate = {}
-        userNameTemplate['template'] = "${source.login}"
-        userNameTemplate['type'] = "BUILT_IN"
-        credentials['scheme'] = scheme
-        credentials['userNameTemplate'] = userNameTemplate
-        payload['credentials'] = credentials
+    if defaultRelayState is not None:
+        signOn['defaultRelayState'] = defaultRelayState
+    if ssoAcsUrl is not None:
+        signOn['ssoAcsUrl'] = ssoAcsUrl
+    if idpIssuer is not None:
+        signOn['idpIssuer'] = idpIssuer
+    if audience is not None:
+        signOn['audience'] = audience
+    if recipient is not None:
+        signOn['recipient'] = recipient
+    if destination is not None:
+        signOn['destination'] = destination
+    if subjectNameIdTemplate is not None:
+        signOn['subjectNameIdTemplate'] = subjectNameIdTemplate
+    if subjectNameIdFormat is not None:
+        signOn['subjectNameIdFormat'] = subjectNameIdFormat
+    if responseSigned is not None:
+        signOn['responseSigned'] = responseSigned
+    if assertionSigned is not None:
+        signOn['assertionSigned'] = assertionSigned
+    if signatureAlgorithm is not None:
+        signOn['signatureAlgorithm'] = signatureAlgorithm
+    if digestAlgorithm is not None:
+        signOn['digestAlgorithm'] = digestAlgorithm
+    if honorForceAuthn is not None:
+        signOn['honorForceAuthn'] = honorForceAuthn
+    if authnContextClassRef is not None:
+        signOn['authnContextClassRef'] = authnContextClassRef
+    if spIssuer is not None:
+        signOn['spIssuer'] = spIssuer
+    if requestCompressed is not None:
+        signOn['requestCompressed'] = requestCompressed
+    if attributeStatements is not None:
+        signOn['attributeStatements'] = attributeStatements
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
@@ -456,13 +532,25 @@ def main():
             id     = dict(type='str', default=None),
             group_id     = dict(type='str', default=None),
             user_id     = dict(type='str', default=None),
-            login_url  = dict(type='str', default=None),
-            redirect_url  = dict(type='str', default=None),
             label  = dict(type='str', default=None),
-            scheme  = dict(type='str', default=None, choices=['ADMIN_SETS_CREDENTIALS', 'EDIT_PASSWORD_ONLY', 'EDIT_USERNAME_AND_PASSWORD', 'EXTERNAL_PASSWORD_SYNC	', 'SHARED_USERNAME_AND_PASSWORD']),
-            username  = dict(type='str', default=None),
-            password  = dict(type='str', default=None, no_log=True),
             limit     = dict(type='int', default=20),
+            defaultRelayState     = dict(type='str', default=""),
+            ssoAcsUrl     = dict(type='str', default=None),
+            idpIssuer     = dict(type='str', default="http://www.okta.com/${org.externalKey}"),
+            audience     = dict(type='str', default=None),
+            recipient     = dict(type='str', default=None),
+            destination     = dict(type='str', default=None),
+            subjectNameIdTemplate     = dict(type='str', default="${user.userName}"),
+            subjectNameIdFormat     = dict(type='str', default="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"),
+            responseSigned     = dict(type='bool', default=True),
+            assertionSigned     = dict(type='bool', default=True),
+            signatureAlgorithm     = dict(type='str', default="RSA_SHA256"),
+            digestAlgorithm     = dict(type='str', default="SHA256"),
+            honorForceAuthn     = dict(type='bool', default=True),
+            authnContextClassRef     = dict(type='str', default="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"),
+            spIssuer     = dict(type='str', default=None),
+            requestCompressed     = dict(type='bool', default=False),
+            attributeStatements     = dict(type='str', default=None),
             send_email     = dict(type='str', default='false')
         )
     )
@@ -473,21 +561,33 @@ def main():
     id = module.params['id']
     group_id = module.params['group_id']
     user_id = module.params['user_id']
-    login_url = module.params['login_url']
-    redirect_url = module.params['redirect_url']
     label = module.params['label']
     limit = module.params['limit']
-    scheme = module.params['scheme']
-    username = module.params['username']
-    password = module.params['password']
+    defaultRelayState = module.params['defaultRelayState']
+    ssoAcsUrl = module.params['ssoAcsUrl']
+    idpIssuer = module.params['idpIssuer']
+    audience = module.params['audience']
+    recipient = module.params['recipient']
+    destination = module.params['destination']
+    subjectNameIdTemplate = module.params['subjectNameIdTemplate']
+    subjectNameIdFormat = module.params['subjectNameIdFormat']
+    responseSigned = module.params['responseSigned']
+    assertionSigned = module.params['assertionSigned']
+    signatureAlgorithm = module.params['signatureAlgorithm']
+    digestAlgorithm = module.params['digestAlgorithm']
+    honorForceAuthn = module.params['honorForceAuthn']
+    authnContextClassRef = module.params['authnContextClassRef']
+    spIssuer = module.params['spIssuer']
+    requestCompressed = module.params['requestCompressed']
+    attributeStatements = module.params['attributeStatements']
     send_email = module.params['send_email']
 
     base_url = "https://%s-admin.okta.com/api/v1/apps" % (organization)
 
     if action == "create":
-        status, message, content, url = create(module,base_url,api_key,label,login_url,redirect_url)
+        status, message, content, url = create(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,audience,recipient,destination,subjectNameIdTemplate,subjectNameIdFormat,responseSigned,assertionSigned,signatureAlgorithm,digestAlgorithm,honorForceAuthn,authnContextClassRef,spIssuer,requestCompressed,attributeStatements)
     elif action == "update":
-        status, message, content, url = update(module,base_url,api_key,label,login_url,redirect_url,id,scheme,username,password)
+        status, message, content, url = update(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,audience,recipient,destination,subjectNameIdTemplate,subjectNameIdFormat,responseSigned,assertionSigned,signatureAlgorithm,digestAlgorithm,honorForceAuthn,authnContextClassRef,spIssuer,requestCompressed,attributeStatements)
     elif action == "delete":
         status, message, content, url = deactivate(module,base_url,api_key,id)
         status, message, content, url = delete(module,base_url,api_key,id)
