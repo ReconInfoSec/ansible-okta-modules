@@ -1,6 +1,8 @@
 # ansible-okta-modules
 Ansible modules for the Okta API
 
+A full example playbook can be found in `main.yml`.
+
 ### In Progress
 
 * SAML apps
@@ -25,7 +27,7 @@ There are currently 3 modules with the following actions:
   * remove_user
 * okta_apps_swa
   * create
-  * update 
+  * update
   * delete
   * list
   * activate
@@ -47,8 +49,6 @@ There are currently 3 modules with the following actions:
   * remove_group
 
 ### Examples
-
-More examples can be found in `main.yml`.
 
 #### Create User
 
@@ -96,33 +96,35 @@ More examples can be found in `main.yml`.
 - name: Create Okta app
   okta_apps_swa:
     action: create
-    label: "Ansible Test"
     organization: "{{ organization }}"
     api_key: "{{ api_key }}"
+    label: "Test SWA App"
     login_url: "https://unicorns.lol/login"
     redirect_url: "https://unicorns.lol/redirect"
   register: okta_app
 
 - name: Print app information
   debug:
-    msg: "{{ okta_app.json }}"
+    msg: "{{ okta_swa_app.json }}"
 ```
 
-#### Update SWA app
+#### Create custom SAML app
 
 ```
-- name: Update Okta app authentication scheme
-  okta_apps_swa:
-    action: update
+- name: Create SAML app
+  okta_apps_saml:
+    action: create
     organization: "{{ organization }}"
     api_key: "{{ api_key }}"
-    id: "{{ okta_app.json.id }}"
-    scheme: "SHARED_USERNAME_AND_PASSWORD"
-    username: "analyst_user"
-    password: "analyst_shared_password"
-  register: okta_app
+    label: "Test SAML App"
+    ssoAcsUrl: "https://app.unicorns.lol/saml/acs"
+    idpIssuer: "http://www.okta.com/${org.externalKey}"
+    audience: "https://app.unicors.lol/saml/metadata"
+    recipient: "https://app.unicorns.lol/saml/acs"
+    destination: "https://app.unicorns.lol/saml/acs"
+  register: okta_saml_app
 
 - name: Print app information
   debug:
-    msg: "{{ okta_app.json }}"
+    msg: "{{ okta_saml_app.json }}"
 ```
