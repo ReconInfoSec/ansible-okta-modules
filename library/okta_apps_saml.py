@@ -134,12 +134,6 @@ options:
 """
 
 EXAMPLES = '''
-# List apps
-- okta_apps_saml:
-    organization: "unicorns"
-    api_key: "TmHvH4LY9HH9MDRDiLChLGwhRjHsarTCBzpwbua3ntnQ"
-    limit: 20
-
 # Create app
 - okta_apps_saml:
     action: create
