@@ -9,18 +9,18 @@ A full example playbook can be found in `main.yml`.
 
 ### Modules
 
-There are currently 3 modules with the following actions:
+The following modules are available with the corresponding actions:
 
 * okta_users
   * create
-  * update - updates login, email, first_name, last_name
+  * update
   * delete
   * list
   * activate
   * deactivate
 * okta_groups
   * create
-  * update - updates name, description
+  * update
   * delete
   * list
   * add_user
