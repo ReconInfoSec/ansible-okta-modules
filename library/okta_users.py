@@ -213,7 +213,7 @@ def create(module,base_url,api_key,login,password_input,email,first_name,last_na
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -245,7 +245,7 @@ def update(module,base_url,api_key,id,login,email,first_name,last_name):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -263,7 +263,7 @@ def delete(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
     if info['status'] != 204:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -281,7 +281,7 @@ def activate(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -299,7 +299,7 @@ def deactivate(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -317,7 +317,7 @@ def list(module,base_url,api_key,limit):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()

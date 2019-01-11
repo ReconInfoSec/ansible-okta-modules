@@ -147,7 +147,7 @@ def delete(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
     if info['status'] != 204:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -165,7 +165,7 @@ def list(module,base_url,api_key,limit):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -183,7 +183,7 @@ def assign_group(module,base_url,api_key,group_id,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -201,7 +201,7 @@ def remove_group(module,base_url,api_key,group_id,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
     if info['status'] != 204:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -219,7 +219,7 @@ def assign_user(module,base_url,api_key,user_id,id,send_email):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -237,7 +237,7 @@ def remove_user(module,base_url,api_key,user_id,id,send_email):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
     if info['status'] != 204:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -255,7 +255,7 @@ def activate(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -273,7 +273,7 @@ def deactivate(module,base_url,api_key,id):
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()

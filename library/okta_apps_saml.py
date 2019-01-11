@@ -234,7 +234,7 @@ def create(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,a
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
@@ -299,7 +299,7 @@ def update(module,base_url,api_key,label,defaultRelayState,ssoAcsUrl,idpIssuer,a
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
     if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % (info['msg']))
+        module.fail_json(msg="Fail: %s" % ( "Status: "+str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
         content = response.read()
